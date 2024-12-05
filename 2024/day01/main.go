@@ -54,7 +54,26 @@ func main() {
 		sum += abs(diff)
 	}
 
-	log.Print("The answer is: ", sum)
+	log.Print("The answer is part 1 is: ", sum)
+
+	m := make(map[int]int)
+	for _, key := range list1 {
+		if _, ok := m[key]; !ok {
+			m[key] = 0
+		}
+	}
+
+	for _, key := range list2 {
+		if _, ok := m[key]; ok {
+			m[key] += 1
+		}
+	}
+
+	var day2ans int
+	for key, val := range m {
+		day2ans += key * val
+	}
+	log.Print("The answer for part 2 is: ", day2ans)
 }
 
 func abs(x int) int {
