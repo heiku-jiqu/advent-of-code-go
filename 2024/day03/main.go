@@ -16,6 +16,7 @@ func main() {
 	if err != nil {
 		log.Panicln("Failed to open file: ", err)
 	}
+	defer f.Close()
 
 	reader := bufio.NewReader(f)
 

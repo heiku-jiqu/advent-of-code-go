@@ -15,6 +15,7 @@ func main() {
 	if err != nil {
 		log.Panic("Failed to open ", INPUTFILE, "; ", err)
 	}
+	defer f.Close()
 
 	part1ans := 0
 	part2ans := 0

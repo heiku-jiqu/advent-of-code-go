@@ -14,6 +14,7 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
+	defer f.Close()
 
 	scanner := bufio.NewScanner(f)
 

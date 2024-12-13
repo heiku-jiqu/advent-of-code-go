@@ -16,6 +16,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to open input file: ", err)
 	}
+	defer f.Close()
 
 	var list1 []int
 	var list2 []int
