@@ -20,6 +20,7 @@ func main() {
 	scanner := bufio.NewScanner(f)
 
 	part1ans := 0
+	part2ans := 0
 	rules := make(map[int][]int)
 	// First section. Parse order rules
 	for scanner.Scan() {
@@ -65,15 +66,19 @@ func main() {
 			isValidPage := checkValidPageUpdateNum(pageUpdateNum, rules)
 			if !isValidPage {
 				validUpdate = false
-				break
 			}
 		}
 		if validUpdate {
 			part1ans += pageUpdateNum[len(pageUpdateNum)/2]
+		} else {
+			corrected := fixInvalidPageUpdate(pageUpdateNum, rules)
+			// log.Print("corrected value update is: ", corrected)
+			part2ans += corrected[len(corrected)/2]
 		}
 	}
 
 	log.Print("Part 1 answer is: ", part1ans)
+	log.Print("Part 2 answer is: ", part2ans)
 }
 
 func checkValidPageUpdateNum(pageUpdateNum []int, rules map[int][]int) bool {
@@ -90,4 +95,46 @@ func checkValidPageUpdateNum(pageUpdateNum []int, rules map[int][]int) bool {
 		}
 	}
 	return true
+}
+
+// returns the corrected update based on rules
+func fixInvalidPageUpdate(invalidPageUpdateNum []int, rules map[int][]int) []int {
+	correct := []int{}
+	// log.Print("invalid page update: ", invalidPageUpdateNum)
+	for _, num := range invalidPageUpdateNum {
+		// log.Print("num to insert: ", num)
+		correct = insertIntoCorrect(correct, num, rules)
+		// log.Print("correct: ", correct)
+	}
+	return correct
+}
+
+func insertIntoCorrect(nums []int, numToInsert int, rules map[int][]int) []int {
+	copied := make([]int, len(nums))
+	copy(copied, nums)
+
+	rule, ok := rules[numToInsert]
+	if !ok {
+		return append(copied, numToInsert)
+	}
+
+	for i, num := range copied {
+		if contains(rule, num) {
+			out := append(copied[:i+1], copied[i:]...) // copy and expand slice by 1 element
+			out[i] = numToInsert
+			// log.Print("numToInsert rule contains current number, inserted midway: ", out)
+			return out
+		}
+	}
+	// log.Print("no rules found, appending to back: ", append(copied, numToInsert))
+	return append(copied, numToInsert)
+}
+
+func contains(nums []int, num int) bool {
+	for _, val := range nums {
+		if val == num {
+			return true
+		}
+	}
+	return false
 }
