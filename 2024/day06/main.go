@@ -77,18 +77,20 @@ func (g *Guard) peekNextLoc() [2]int {
 }
 
 func (g *Guard) peekDirection() [2]int {
-	newLoc := [2]int{g.currentLoc[0] + g.direction[0], g.currentLoc[1] + g.direction[1]}
-	if newLoc[0] < 0 || newLoc[0] >= len(g.posnMap) || newLoc[1] < 0 || newLoc[1] >= len(g.posnMap[0]) {
-		return g.direction
-	}
-	if g.posnMap[newLoc[0]][newLoc[1]] == '#' {
-		newDirection := [2]int{
-			g.direction[1],
-			g.direction[0] * -1,
+	newDirection := g.direction
+	for range 4 {
+		newLoc := [2]int{g.currentLoc[0] + newDirection[0], g.currentLoc[1] + newDirection[1]}
+		if newLoc[0] < 0 || newLoc[0] >= len(g.posnMap) || newLoc[1] < 0 || newLoc[1] >= len(g.posnMap[0]) {
+			return g.direction
 		}
-		return newDirection
+		if g.posnMap[newLoc[0]][newLoc[1]] == '#' {
+			newDirection = [2]int{
+				newDirection[1],
+				newDirection[0] * -1,
+			}
+		}
 	}
-	return g.direction
+	return newDirection
 }
 
 func (g *Guard) traverse() {
@@ -97,7 +99,9 @@ func (g *Guard) traverse() {
 		// log.Print("Warning: ignoring traversal because guard is already out of map: ", g.currentLoc)
 		return
 	}
-	newLoc := [2]int{g.currentLoc[0] + g.direction[0], g.currentLoc[1] + g.direction[1]}
+	newLoc := g.peekNextLoc()
+	newDirection := g.peekDirection()
+	g.direction = newDirection
 
 	// check if guard is out of map in newLoc
 	if newLoc[0] < 0 || newLoc[0] >= len(g.posnMap) || newLoc[1] < 0 || newLoc[1] >= len(g.posnMap[0]) {
@@ -107,18 +111,6 @@ func (g *Guard) traverse() {
 		return
 	}
 
-	// check if newLoc is blocked,
-	if g.posnMap[newLoc[0]][newLoc[1]] == '#' {
-		// turn direction before we move
-		// math coordinate transformation
-		newDirection := [2]int{
-			g.direction[1],
-			g.direction[0] * -1,
-		}
-		g.direction = newDirection
-		newLoc = [2]int{g.currentLoc[0] + g.direction[0], g.currentLoc[1] + g.direction[1]}
-		// log.Print("turning! new direction is: ", g.direction)
-	}
 	// add new location into traveled since we are still inside map, then move
 	if directions, contain := g.distinctPos[newLoc]; !contain {
 		// havent been here before
@@ -138,7 +130,7 @@ func (g *Guard) traverse() {
 // Done by checking whether guard has been in the same tile+direction after
 // obstructing, turning right and keep moving straight (don't have to be just move 1 tile)
 func (g *Guard) checkIfObstructWillLoop() bool {
-	// keep walking in new direction and checking whether guard has been in the same tile+direction
+	// copy to new guard
 	newLoc := g.currentLoc
 	newPosnMap := make([][]rune, len(g.posnMap))
 	for i, row := range g.posnMap {
@@ -177,6 +169,8 @@ func (g *Guard) checkIfObstructWillLoop() bool {
 		currentLoc:  g.currentLoc,
 		direction:   g.direction,
 	}
+
+	// keep walking in new direction and checking whether guard has been in the same tile+direction
 	for simulatedGuard.isInsideMap {
 		if simulatedGuard.checkIfVisitedAndSameDirection(simulatedGuard.peekNextLoc(), simulatedGuard.peekDirection()) {
 			return true
