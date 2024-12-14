@@ -34,39 +34,39 @@ func main() {
 	// log.Print("starting location is: ", startingLoc)
 
 	guard := NewGuard(posnMap, startingLoc)
-	part2ans := 0
 	for guard.isInsideMap {
 		guard.traverse()
 		log.Print("main guard is at: ", guard.currentLoc)
-		if guard.checkIfObstructWillLoop() {
-			part2ans++
-		}
+		guard.checkIfObstructWillLoop()
 	}
 
 	log.Print("Part 1 answer: ", len(guard.distinctPos))
-	log.Print("Part 2 answer: ", part2ans)
+	log.Print("Part 2 answer: ", len(guard.loopStoneLoc))
 }
 
 type Guard struct {
-	posnMap     [][]rune
-	isInsideMap bool
-	route       [][2]int
-	distinctPos map[[2]int][][2]int // key: location, val: []directions
-	currentLoc  [2]int
-	direction   [2]int
+	posnMap      [][]rune
+	isInsideMap  bool
+	route        [][2]int
+	distinctPos  map[[2]int][][2]int // key: location, val: []directions
+	currentLoc   [2]int
+	direction    [2]int
+	loopStoneLoc map[[2]int]struct{}
 }
 
 func NewGuard(posnMap [][]rune, startingLoc [2]int) *Guard {
 	distinctPos := make(map[[2]int][][2]int)
 	startDirection := [2]int{-1, 0}
 	distinctPos[startingLoc] = [][2]int{startDirection}
+	loopStoneLoc := make(map[[2]int]struct{})
 	return &Guard{
-		posnMap:     posnMap,
-		isInsideMap: true,
-		route:       [][2]int{startingLoc},
-		distinctPos: distinctPos,
-		currentLoc:  startingLoc,
-		direction:   startDirection,
+		posnMap:      posnMap,
+		isInsideMap:  true,
+		route:        [][2]int{startingLoc},
+		distinctPos:  distinctPos,
+		currentLoc:   startingLoc,
+		direction:    startDirection,
+		loopStoneLoc: loopStoneLoc,
 	}
 }
 
@@ -129,7 +129,7 @@ func (g *Guard) traverse() {
 //
 // Done by checking whether guard has been in the same tile+direction after
 // obstructing, turning right and keep moving straight (don't have to be just move 1 tile)
-func (g *Guard) checkIfObstructWillLoop() bool {
+func (g *Guard) checkIfObstructWillLoop() {
 	// copy to new guard
 	newLoc := g.currentLoc
 	newPosnMap := make([][]rune, len(g.posnMap))
@@ -145,7 +145,7 @@ func (g *Guard) checkIfObstructWillLoop() bool {
 		newLoc[1] + g.direction[1],
 	}
 	if stoneLoc[0] < 0 || stoneLoc[0] >= len(g.posnMap) || stoneLoc[1] < 0 || stoneLoc[1] >= len(g.posnMap[0]) {
-		return false
+		return
 	}
 	newPosnMap[stoneLoc[0]][stoneLoc[1]] = '#'
 	newDistinctPos := make(map[[2]int][][2]int)
@@ -173,11 +173,13 @@ func (g *Guard) checkIfObstructWillLoop() bool {
 	// keep walking in new direction and checking whether guard has been in the same tile+direction
 	for simulatedGuard.isInsideMap {
 		if simulatedGuard.checkIfVisitedAndSameDirection(simulatedGuard.peekNextLoc(), simulatedGuard.peekDirection()) {
-			return true
+			if _, ok := g.loopStoneLoc[stoneLoc]; !ok {
+				g.loopStoneLoc[stoneLoc] = struct{}{}
+			}
+			return
 		}
 		simulatedGuard.traverse()
 	}
-	return false
 }
 
 func (g *Guard) checkIfVisitedAndSameDirection(loc [2]int, direction [2]int) bool {
