@@ -36,7 +36,7 @@ func main() {
 	guard := NewGuard(posnMap, startingLoc)
 	for guard.isInsideMap {
 		guard.traverse()
-		log.Print("main guard is at: ", guard.currentLoc)
+		// log.Print("main guard is at: ", guard.currentLoc)
 		guard.checkIfObstructWillLoop()
 	}
 
@@ -145,6 +145,9 @@ func (g *Guard) checkIfObstructWillLoop() {
 		newLoc[1] + g.direction[1],
 	}
 	if stoneLoc[0] < 0 || stoneLoc[0] >= len(g.posnMap) || stoneLoc[1] < 0 || stoneLoc[1] >= len(g.posnMap[0]) {
+		return
+	}
+	if _, ok := g.distinctPos[stoneLoc]; ok {
 		return
 	}
 	newPosnMap[stoneLoc[0]][stoneLoc[1]] = '#'
