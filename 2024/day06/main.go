@@ -173,6 +173,9 @@ func (g *Guard) checkIfObstructWillLoop() {
 	if _, ok := g.distinctPos[stoneLoc]; ok {
 		return
 	}
+	if _, ok := g.loopStoneLoc[stoneLoc]; ok {
+		return
+	}
 	if g.posnMap[stoneLoc[0]][stoneLoc[1]] == '#' {
 		return
 	}
@@ -182,10 +185,9 @@ func (g *Guard) checkIfObstructWillLoop() {
 
 	// keep walking in new direction and checking whether guard has been in the same tile+direction
 	for simulatedGuard.isInsideMap {
+		// log.Print(simulatedGuard.currentLoc, simulatedGuard.direction, stoneLoc, simulatedGuard.peekNextLoc(), simulatedGuard.peekDirection())
 		if simulatedGuard.checkIfVisitedAndSameDirection(simulatedGuard.peekNextLoc(), simulatedGuard.peekDirection()) {
-			if _, ok := g.loopStoneLoc[stoneLoc]; !ok {
-				g.loopStoneLoc[stoneLoc] = struct{}{}
-			}
+			g.loopStoneLoc[stoneLoc] = struct{}{}
 			return
 		}
 		simulatedGuard.traverse()
