@@ -125,13 +125,8 @@ func (g *Guard) traverse() {
 	// log.Print("after move: isInsideMap ", g.isInsideMap, ", currentLoc ", g.currentLoc)
 }
 
-// Returns whether placing an obstruction on next position will cause a loop in Guard's path
-//
-// Done by checking whether guard has been in the same tile+direction after
-// obstructing, turning right and keep moving straight (don't have to be just move 1 tile)
-func (g *Guard) checkIfObstructWillLoop() {
+func (g *Guard) Copy() *Guard {
 	// copy to new guard
-	newLoc := g.currentLoc
 	newPosnMap := make([][]rune, len(g.posnMap))
 	for i, row := range g.posnMap {
 		newRow := make([]rune, len(row))
@@ -140,17 +135,6 @@ func (g *Guard) checkIfObstructWillLoop() {
 		}
 		newPosnMap[i] = newRow
 	}
-	stoneLoc := [2]int{
-		newLoc[0] + g.direction[0],
-		newLoc[1] + g.direction[1],
-	}
-	if stoneLoc[0] < 0 || stoneLoc[0] >= len(g.posnMap) || stoneLoc[1] < 0 || stoneLoc[1] >= len(g.posnMap[0]) {
-		return
-	}
-	if _, ok := g.distinctPos[stoneLoc]; ok {
-		return
-	}
-	newPosnMap[stoneLoc[0]][stoneLoc[1]] = '#'
 	newDistinctPos := make(map[[2]int][][2]int)
 	for key, val := range g.distinctPos {
 		newVal := make([][2]int, len(val))
@@ -164,7 +148,7 @@ func (g *Guard) checkIfObstructWillLoop() {
 		newRoute[i] = v
 	}
 
-	simulatedGuard := &Guard{
+	return &Guard{
 		posnMap:     newPosnMap,
 		isInsideMap: g.isInsideMap,
 		route:       newRoute,
@@ -172,6 +156,29 @@ func (g *Guard) checkIfObstructWillLoop() {
 		currentLoc:  g.currentLoc,
 		direction:   g.direction,
 	}
+}
+
+// Returns whether placing an obstruction on next position will cause a loop in Guard's path
+//
+// Done by checking whether guard has been in the same tile+direction after
+// obstructing, turning right and keep moving straight (don't have to be just move 1 tile)
+func (g *Guard) checkIfObstructWillLoop() {
+	stoneLoc := [2]int{
+		g.currentLoc[0] + g.direction[0],
+		g.currentLoc[1] + g.direction[1],
+	}
+	if stoneLoc[0] < 0 || stoneLoc[0] >= len(g.posnMap) || stoneLoc[1] < 0 || stoneLoc[1] >= len(g.posnMap[0]) {
+		return
+	}
+	if _, ok := g.distinctPos[stoneLoc]; ok {
+		return
+	}
+	if g.posnMap[stoneLoc[0]][stoneLoc[1]] == '#' {
+		return
+	}
+
+	simulatedGuard := g.Copy()
+	simulatedGuard.posnMap[stoneLoc[0]][stoneLoc[1]] = '#'
 
 	// keep walking in new direction and checking whether guard has been in the same tile+direction
 	for simulatedGuard.isInsideMap {
