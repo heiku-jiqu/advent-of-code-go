@@ -39,9 +39,41 @@ func main() {
 		// log.Print("main guard is at: ", guard.currentLoc)
 		guard.checkIfObstructWillLoop()
 	}
-
 	log.Print("Part 1 answer: ", len(guard.distinctPos))
 	log.Print("Part 2 answer: ", len(guard.loopStoneLoc))
+
+	log.Print("BRUTE FORCING NOW")
+	day2ans := 0
+	for pos, _ := range guard.distinctPos {
+		if pos == startingLoc {
+			continue
+		}
+		if tile := posnMap[pos[0]][pos[1]]; tile != '.' {
+			continue
+		}
+		newPosnMap := make([][]rune, len(posnMap))
+		for i, row := range posnMap {
+			newRow := make([]rune, len(row))
+			for j, val := range row {
+				newRow[j] = val
+			}
+			newPosnMap[i] = newRow
+		}
+		newPosnMap[pos[0]][pos[1]] = '#'
+		guardCopy := NewGuard(newPosnMap, startingLoc)
+		// log.Print("placing stone at ", pos)
+		// log.Print(guardCopy.posnMap)
+		for guardCopy.isInsideMap {
+			if guardCopy.checkIfVisitedAndSameDirection(guardCopy.peekNextLoc(), guardCopy.peekDirection()) {
+				day2ans++
+				break
+			}
+			guardCopy.traverse()
+		}
+
+	}
+
+	log.Print("Part 2 answer: ", day2ans)
 }
 
 type Guard struct {
