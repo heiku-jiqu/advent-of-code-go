@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
+	"sync/atomic"
 )
 
 const INPUTFILE = "./2024/day06/input.txt"
@@ -43,7 +45,8 @@ func main() {
 	log.Print("Part 2 answer: ", len(guard.loopStoneLoc))
 
 	log.Print("BRUTE FORCING NOW")
-	day2ans := 0
+	var day2ansAtomic atomic.Uint32
+	var wg sync.WaitGroup
 	for pos, _ := range guard.distinctPos {
 		if pos == startingLoc {
 			continue
@@ -51,29 +54,35 @@ func main() {
 		if tile := posnMap[pos[0]][pos[1]]; tile != '.' {
 			continue
 		}
-		newPosnMap := make([][]rune, len(posnMap))
-		for i, row := range posnMap {
-			newRow := make([]rune, len(row))
-			for j, val := range row {
-				newRow[j] = val
-			}
-			newPosnMap[i] = newRow
-		}
-		newPosnMap[pos[0]][pos[1]] = '#'
-		guardCopy := NewGuard(newPosnMap, startingLoc)
-		// log.Print("placing stone at ", pos)
-		// log.Print(guardCopy.posnMap)
-		for guardCopy.isInsideMap {
-			if guardCopy.checkIfVisitedAndSameDirection(guardCopy.peekNextLoc(), guardCopy.peekDirection()) {
-				day2ans++
-				break
-			}
-			guardCopy.traverse()
-		}
-
+		wg.Add(1)
+		go run(posnMap, pos, startingLoc, &day2ansAtomic, &wg)
 	}
+	wg.Wait()
 
-	log.Print("Part 2 answer: ", day2ans)
+	log.Print("Part 2 answer: ", day2ansAtomic.Load())
+}
+
+func run(posnMap [][]rune, newObstaclePosn [2]int, startingLoc [2]int, counter *atomic.Uint32, wg *sync.WaitGroup) {
+	newPosnMap := make([][]rune, len(posnMap))
+	for i, row := range posnMap {
+		newRow := make([]rune, len(row))
+		for j, val := range row {
+			newRow[j] = val
+		}
+		newPosnMap[i] = newRow
+	}
+	newPosnMap[newObstaclePosn[0]][newObstaclePosn[1]] = '#'
+	guardCopy := NewGuard(newPosnMap, startingLoc)
+	// log.Print("placing stone at ", pos)
+	// log.Print(guardCopy.posnMap)
+	for guardCopy.isInsideMap {
+		if guardCopy.checkIfVisitedAndSameDirection(guardCopy.peekNextLoc(), guardCopy.peekDirection()) {
+			counter.Add(1)
+			break
+		}
+		guardCopy.traverse()
+	}
+	wg.Done()
 }
 
 type Guard struct {
