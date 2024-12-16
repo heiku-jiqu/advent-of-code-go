@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-const INPUTFILE = "./2024/day07/input_test.txt"
+const INPUTFILE = "./2024/day07/input.txt"
 
 type Equation struct {
 	TestVal int
@@ -39,19 +39,31 @@ func main() {
 	}
 
 	part1ans := 0
+	part2ans := 0
 	for _, eqn := range eqns {
 		// log.Print(eqn, eqn.isTally())
-		if eqn.isTally() {
+		if eqn.isTally(1) {
 			part1ans += eqn.TestVal
+		}
+		if eqn.isTally(2) {
+			part2ans += eqn.TestVal
 		}
 	}
 	log.Print("Part 1 answer is: ", part1ans)
+	log.Print("Part 2 answer is: ", part2ans)
 }
 
 // Check if equation tallies
-func (e Equation) isTally() bool {
+func (e Equation) isTally(part int) bool {
 	// recursively check by adding or multiplying
-	return e.recurse(0, 0)
+	addOrMultiply := e.recurse(0, 0)
+	if part == 1 {
+		return addOrMultiply
+	}
+	if part == 2 {
+		return e.recurseConcat(0, 0)
+	}
+	panic("invalid part")
 }
 
 // recursively calculates left to right
@@ -61,9 +73,21 @@ func (e Equation) recurse(cumulative int, idx int) bool {
 		return cumulative == e.TestVal
 	}
 	add := e.recurse(cumulative+e.Nums[idx], idx+1)
-	multiply := e.recurse(cumulative*e.Nums[idx], idx+1)
+	multiply := e.recurse(max(cumulative, 1)*e.Nums[idx], idx+1)
 
 	return add || multiply
+}
+
+func (e Equation) recurseConcat(cumulative int, idx int) bool {
+	if idx == len(e.Nums) {
+		return cumulative == e.TestVal
+	}
+	add := e.recurseConcat(cumulative+e.Nums[idx], idx+1)
+	multiply := e.recurseConcat(max(cumulative, 1)*e.Nums[idx], idx+1)
+	concatCumulative := strToInt(intToStr(cumulative) + intToStr(e.Nums[idx]))
+	concat := e.recurseConcat(concatCumulative, idx+1)
+
+	return add || multiply || concat
 }
 
 // Convert string to int. Panics if fails
@@ -73,4 +97,10 @@ func strToInt(s string) int {
 		panic(err)
 	}
 	return i
+}
+
+// Convert int to string. Panics if fails
+func intToStr(i int) string {
+	s := strconv.Itoa(i)
+	return s
 }
