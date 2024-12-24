@@ -38,6 +38,7 @@ func main() {
 		i++
 	}
 	uniqueNodes := make(map[[2]int]struct{})
+	uniqueNodesPart2 := make(map[[2]int]struct{})
 	for _, antennaPosn := range Nodes {
 		// log.Print("antenna: ", string(antenna))
 		// log.Print("antenna posn: ", (antennaPosn))
@@ -51,8 +52,16 @@ func main() {
 				uniqueNodes[loc] = struct{}{}
 			}
 		}
+
+		resonantAntiPosn := calcResonantPosn(antennaPosn, nodeMap)
+		for _, loc := range resonantAntiPosn {
+			if _, exist := uniqueNodesPart2[loc]; !exist {
+				uniqueNodesPart2[loc] = struct{}{}
+			}
+		}
 	}
 	log.Print("Part 1 answer is: ", len(uniqueNodes))
+	log.Print("Part 2 answer is: ", len(uniqueNodesPart2))
 }
 
 // Given antennas positions, returns all possible antinode positions
@@ -82,4 +91,44 @@ func isOffTheMap(nodeMap [][]rune, posn [2]int) bool {
 		return true
 	}
 	return false
+}
+
+func calcResonantPosn(antennas [][2]int, nodeMap [][]rune) [][2]int {
+	var out [][2]int
+	if len(antennas) < 2 {
+		return out
+	}
+
+	outUnique := make(map[[2]int]struct{})
+	for i := 0; i < len(antennas); i++ {
+		for j := i + 1; j < len(antennas); j++ {
+			antennaOne := antennas[i]
+			antennaTwo := antennas[j]
+			distance := [2]int{
+				antennaOne[0] - antennaTwo[0],
+				antennaOne[1] - antennaTwo[1],
+			}
+			curr := antennaOne
+			for !isOffTheMap(nodeMap, curr) {
+				outUnique[curr] = struct{}{}
+				curr = addDistance(curr, distance)
+			}
+			curr = antennaOne
+			for !isOffTheMap(nodeMap, curr) {
+				outUnique[curr] = struct{}{}
+				curr = substractDistance(curr, distance)
+			}
+		}
+	}
+	for key := range outUnique {
+		out = append(out, key)
+	}
+	return out
+}
+
+func addDistance(posn, distance [2]int) [2]int {
+	return [2]int{posn[0] + distance[0], posn[1] + distance[1]}
+}
+func substractDistance(posn, distance [2]int) [2]int {
+	return [2]int{posn[0] - distance[0], posn[1] - distance[1]}
 }
