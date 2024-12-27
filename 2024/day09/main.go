@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-var INPUTFILE = "./2024/day09/input_test.txt"
+var INPUTFILE = "./2024/day09/input.txt"
 
 func main() {
 	fileBytes, err := os.ReadFile(INPUTFILE)
@@ -104,21 +104,32 @@ func compactWholeFiles(expandedFS []int) []int {
 	left := 0
 	right := len(compacted) - 1
 	for left < right {
-		log.Print("compacting: ", compacted, " left: ", left, " right: ", right)
+		// log.Print("compacting: ", compacted, " left: ", left, " right: ", right)
 		if compacted[left] == -1 && compacted[right] != -1 {
-			//TODO: check all possible spaces!!!
 
-			// check if left space can fit right file
-			spaceSize := findSizeStartingLeft(compacted, left)
-			fileSize := findSizeStartingRight(compacted, right)
-			log.Print("space size: ", spaceSize, " file size: ", fileSize)
-			if spaceSize >= fileSize {
-				log.Print("can fit, moving file: ", compacted[right])
-				// if can fit, move file
-				for i := range fileSize {
-					compacted[left+i], compacted[right-i] = compacted[right-i], compacted[left+i]
+			//TODO: check all possible spaces!!!
+			leftSeek := left
+			for leftSeek < right {
+				if compacted[leftSeek] != -1 {
+					leftSeek++
+					continue
 				}
-			} else {
+				// check if leftSeek space can fit right file
+				spaceSize := findSizeStartingLeft(compacted, leftSeek)
+				fileSize := findSizeStartingRight(compacted, right)
+				// log.Print("space size: ", spaceSize, " file size: ", fileSize)
+				if spaceSize >= fileSize {
+					// log.Print("can fit, moving file: ", compacted[right])
+					// if can fit, move file
+					for i := range fileSize {
+						compacted[leftSeek+i], compacted[right-i] = compacted[right-i], compacted[leftSeek+i]
+					}
+					break
+				}
+				leftSeek++
+			}
+
+			if leftSeek >= right {
 				// if cannot fit, move right pointer to next fileID that is not -1
 				curr := compacted[right]
 				for curr == compacted[right] {
