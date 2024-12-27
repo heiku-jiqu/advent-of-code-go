@@ -25,7 +25,7 @@ func main() {
 }
 
 // expands dense file format into actual blocks
-// with ID number and . for empty
+// with ID number and -1 for empty
 func expandFileFormatInt(denseString string) []int {
 	out := []int{}
 	for i, char := range denseString {
@@ -77,22 +77,6 @@ func compact(expandedFS []int) []int {
 		}
 	}
 	return expanded
-}
-
-func toInt(s string) []int {
-	out := make([]int, len(s))
-	for i, c := range s {
-		if c == '.' {
-			out[i] = -1
-			continue
-		}
-		num, err := strconv.Atoi(string(c))
-		if err != nil {
-			log.Panic(err)
-		}
-		out[i] = num
-	}
-	return out
 }
 
 func checksum(compacted []int) int {
